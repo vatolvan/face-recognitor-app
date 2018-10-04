@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+	<title>Webcam photo demo</title>
+    <meta charset='utf-8'>
+    <script
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+</head>
+<body>
+    <div id="myOnlineCamera">
+        <video id="webcamvideo"></video>
+        <canvas id="facephoto"
+					ondragenter="event.stopPropagation(); event.preventDefault();"
+     			ondragover="event.stopPropagation(); event.preventDefault();"
+     			ondrop="event.stopPropagation(); event.preventDefault(); dodrop(event);">
+				</canvas>
+        <button id="playwebcam">Play webcam video</button>
+        <button id="takephoto">Take Photo!</button>
+        <input type="text" id="namefield">
+        <button id="whoisit">Who are you?</button>
+    </div>
+    <div>
+        <h1 id="detectedname"></h1>
+    </div>
+
+    <style>
+        #myOnlineCamera video{width:320px;height:240px;margin:15px;float:left;}
+        #myOnlineCamera video{border: 1px solid black;}
+				#myOnlineCamera canvas{width:320px;height:240px;margin:15px;float:left;}
+				#myOnlineCamera canvas{border: 1px solid black;}
+        #myOnlineCamera button{clear:both;margin:30px;}
+    </style>
+
+    <script>
+
+				function dodrop(event)
+				{
+					var dt = event.dataTransfer;
+					var files = dt.files;
+					var count = files.length;
+
+					var reader = new FileReader();
+					reader.onload = function(e) {
+						var image = new Image();
+						image.onload = function() {
+							var video = document.getElementById('webcamvideo');
+							var canvas = document.getElementById('facephoto');
+							canvas.width  = video.offsetWidth;
+							canvas.height = video.offsetHeight;
+
+							var tempcontext = canvas.getContext("2d"),
+									tempScale = (canvas.height/canvas.width);
+
+							tempcontext.drawImage(
+									image,
+									0, 0,
+									video.offsetWidth, video.offsetHeight
+							);
+
+							$.post( "/whoisit", {image: canvas.toDataURL( 'image/png' )}, function(data) {
+									console.log("Post success: ", data);
+									document.getElementById('detectedname').innerHTML = "IT IS " + data.playerName.className;
+							});
+						};
+						image.src = reader.result;
+					}
+					reader.readAsDataURL(files[0]);
+
+
+				}
+
+        var videoObj    = { "video": true },
+            errBack        = function(error){
+                alert("Video capture error: ", error.code);
+            };
+
+        // Ask the browser for permission to use the Webcam
+        if(navigator.getUserMedia){                    // Standard
+            navigator.getUserMedia(videoObj, startWebcam, errBack);
+        }else if(navigator.webkitGetUserMedia){        // WebKit
+            navigator.webkitGetUserMedia(videoObj, startWebcam, errBack);
+        }else if(navigator.mozGetUserMedia){        // Firefox
+            navigator.mozGetUserMedia(videoObj, startWebcam, errBack);
+        };
+
+        function startWebcam(stream){
+
+            var myOnlineCamera    = document.getElementById('myOnlineCamera'),
+                video            = document.getElementById('webcamvideo'),
+                canvas            = document.getElementById('facephoto');
+
+            let playBtn = document.getElementById('playwebcam').addEventListener('click', () => {
+                video.width = video.offsetWidth;
+
+                if(navigator.getUserMedia){                    // Standard
+                    video.srcObject = stream;
+                    video.play();
+                }else if(navigator.webkitGetUserMedia){        // WebKit
+                    video.srcObject = window.webkitURL.createObjectURL(stream);
+                    video.play();
+                }else if(navigator.mozGetUserMedia){        // Firefox
+                    video.srcObject = window.URL.createObjectURL(stream);
+                    video.play();
+                };
+            })
+
+            // Click to take the photo
+            document.getElementById('takephoto').addEventListener('click', () => {
+                var canvas = document.getElementById('facephoto');
+
+                canvas.width  = video.offsetWidth;
+                canvas.height = video.offsetHeight;
+
+                var tempcontext = canvas.getContext("2d"),
+                    tempScale = (canvas.height/canvas.width);
+
+                tempcontext.drawImage(
+                    video,
+                    0, 0,
+                    video.offsetWidth, video.offsetHeight
+                );
+
+                $.post( "/image", {image: canvas.toDataURL( 'image/png' ), name: document.getElementById('namefield').value}, function( data ) {
+                    console.log("Post success: " + data);
+                });
+
+            })
+
+            // Click to take the photo
+            document.getElementById('whoisit').addEventListener('click', () => {
+                var canvas = document.getElementById('facephoto');
+                document.getElementById('detectedname').innerHTML = null;
+
+                canvas.width  = video.offsetWidth;
+                canvas.height = video.offsetHeight;
+
+                var tempcontext = canvas.getContext("2d"),
+                    tempScale = (canvas.height/canvas.width);
+
+                tempcontext.drawImage(
+                    video,
+                    0, 0,
+                    video.offsetWidth, video.offsetHeight
+                );
+
+                $.post( "/whoisit", {image: canvas.toDataURL( 'image/png' )}, function(data) {
+                    console.log("Post success: ", data);
+                    document.getElementById('detectedname').innerHTML = "IT IS " + data.playerName.className;
+                });
+
+            })
+
+        };
+
+    </script>
+
+</body>
+</html>
