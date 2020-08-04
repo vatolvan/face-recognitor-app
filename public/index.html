@@ -59,7 +59,9 @@
 									video.offsetWidth, video.offsetHeight
 							);
 
-							$.post( "/whoisit", {image: canvas.toDataURL( 'image/png' )}, function(data) {
+							const url = "http://localhost:3000/whoisit";
+							console.log('Url is ', url);
+							$.post(url, {image: canvas.toDataURL( 'image/png' )}, function(data) {
 									console.log("Post success: ", data);
 									document.getElementById('detectedname').innerHTML = "IT IS " + data.playerName.className;
 							});
@@ -122,7 +124,7 @@
                     video.offsetWidth, video.offsetHeight
                 );
 
-                $.post( "/image", {image: canvas.toDataURL( 'image/png' ), name: document.getElementById('namefield').value}, function( data ) {
+                $.post( "http://localhost:3000/image", {image: canvas.toDataURL( 'image/png' ), name: document.getElementById('namefield').value}, function( data ) {
                     console.log("Post success: " + data);
                 });
 
@@ -145,7 +147,11 @@
                     video.offsetWidth, video.offsetHeight
                 );
 
-                $.post( "/whoisit", {image: canvas.toDataURL( 'image/png' )}, function(data) {
+                const time1 = (new Date()).getTime();
+                console.log('Time is ')
+                $.post( "http://localhost:3000/whoisit", {image: canvas.toDataURL( 'image/png' )}, function(data) {
+                    const time2 = (new Date()).getTime();
+                    console.log('it took ' + (time2 - time1));
                     console.log("Post success: ", data);
                     document.getElementById('detectedname').innerHTML = "IT IS " + data.playerName.className;
                 });
